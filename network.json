@@ -56,7 +56,7 @@
         },
         "nsgAccessRule1Name": {
             "type": "string",
-            "defaultValue": "NSG Rule 1"
+            "defaultValue": "nsg_rule_1"
         },
         "nsgAccessRule1Ip": {
             "type": "string",
