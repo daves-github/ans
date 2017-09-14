@@ -1,3 +1,193 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
+    "parameters": {
+        "customerPrefix": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "eastus"
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.2.0.0/25"
+        },
+        "subnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.2.0.0/26"
+        },
+        "vpnsubnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.2.0.112/28"
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "app-subnet"
+        },
+        "vmPublicIpAddressType": {
+            "type": "string",
+            "defaultValue": "Static"
+        },
+        "vpnGatewayName": {
+            "type": "string",
+            "defaultValue": "sv-azure-local-gw"
+        },
+        "vpnSku": {
+            "type": "string",
+            "defaultValue": "Basic"
+        },
+        "gatewayType": {
+            "type": "string",
+            "defaultValue": "Vpn",
+            "allowedValues": [
+                "Vpn",
+                "ExpressRoute"
+            ]
+        },
+        "vpnType": {
+            "type": "string",
+            "defaultValue": "RouteBased",
+            "allowedValues": [
+                "RouteBased",
+                "PolicyBased"
+            ]
+        },
+        "vpnNewSubnetName": {
+            "type": "string",
+            "defaultValue": "GatewaySubnet"
+        },
+        "nsgAccessRule1Name": {
+            "type": "string",
+            "defaultValue": "NSG Rule 1"
+        },
+        "nsgAccessRule1Ip": {
+            "type": "string",
+            "defaultValue": "8.8.8.8/32"
+        },
+        "nsgAccessRule1Port": {
+            "type": "string",
+            "defaultValue": "22"
+        }
+    },
+    "variables": {
+        "rgName": "[resourceGroup().name]",
+        "virtualNetworkName": "[concat(variables('customerPrefixLower'), '-sv-', parameters('location'), '-vn')]",
+        "vnetId": "[resourceId(variables('rgName'),'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+        "vmPublicIpAddressName": "[concat(variables('virtualMachineName'), '-pip')]",
+        "networkSecurityGroupName": "[concat(variables('virtualMachineName'), '-nsg')]",
+        "vpnPublicIpAddressName": "[concat(parameters('vpnGatewayName'), '-pip')]"       
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-06-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2016-09-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "[parameters('nsgAccessRule1Name')]",
+                        "properties": {
+                            "priority": 1100,
+                            "sourceAddressPrefix": "[parameters('nsgAccessRule1Ip')]",
+                            "protocol": "TCP",
+                            "destinationPortRange": "[parameters('nsgAccessRule1Port')]",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            
+            "name": "[variables('vpnPublicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2016-11-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "apiVersion": "2017-06-01",
+            "name": "[parameters('vpnGatewayName')]",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/GatewaySubnet')]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('vpnPublicIpAddressName'))]"
+            ],
+            "properties": {
+                "gatewayType": "[parameters('gatewayType')]",
+                "ipConfigurations": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId(variables('rgName'), 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), parameters('vpnNewSubnetName'))]"
+                            },
+                            "publicIpAddress": {
+                                "id": "[resourceId(variables('rgName'), 'Microsoft.Network/publicIPAddresses', variables('vpnPublicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "vpnType": "[parameters('vpnType')]",
+                "sku": {
+                    "name": "[parameters('vpnSku')]",
+                    "tier": "[parameters('vpnSku')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2016-12-01",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "name": "[concat(variables('virtualNetworkName'), '/', parameters('vpnNewSubnetName'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ], 
+            "properties": {
+                "addressPrefix": "[parameters('vpnsubnetAddressPrefix')]"
+            }
+        }
+
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        },
+        "PublicIPAddress":{
+            "type": "string",
+            "value": "[reference(variables('vmPublicIpAddressName')).ipAddress]"
+        }
+    }
+}
