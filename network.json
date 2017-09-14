@@ -72,8 +72,7 @@
         "virtualNetworkName": "[concat('ans-', parameters('location'), '-vn')]",
         "vnetId": "[resourceId(variables('rgName'),'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
-        "vmPublicIpAddressName": "[concat(variables('virtualMachineName'), '-pip')]",
-        "networkSecurityGroupName": "[concat(variables('virtualMachineName'), '-nsg')]",
+        "networkSecurityGroupName": "[concat(variables('rgName'), '-nsg')]",
         "vpnPublicIpAddressName": "[concat(parameters('vpnGatewayName'), '-pip')]"       
     },
     "resources": [
