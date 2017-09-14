@@ -69,7 +69,7 @@
     },
     "variables": {
         "rgName": "[resourceGroup().name]",
-        "virtualNetworkName": "[concat(variables('customerPrefixLower'), '-sv-', parameters('location'), '-vn')]",
+        "virtualNetworkName": "[concat('ans-', parameters('location'), '-vn')]",
         "vnetId": "[resourceId(variables('rgName'),'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
         "vmPublicIpAddressName": "[concat(variables('virtualMachineName'), '-pip')]",
