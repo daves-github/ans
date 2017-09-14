@@ -28,7 +28,7 @@
         },
         "vpnGatewayName": {
             "type": "string",
-            "defaultValue": "sv-azure-local-gw"
+            "defaultValue": "ans-azure-local-gw"
         },
         "vpnSku": {
             "type": "string",
