@@ -178,13 +178,5 @@
 
     ],
     "outputs": {
-        "adminUsername": {
-            "type": "string",
-            "value": "[parameters('adminUsername')]"
-        },
-        "PublicIPAddress":{
-            "type": "string",
-            "value": "[reference(variables('vmPublicIpAddressName')).ipAddress]"
-        }
     }
 }
